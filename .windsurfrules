@@ -1,0 +1,63 @@
+# Swahili Learn Project Development Rules for AI Assistant
+
+1. Project Architecture Principles:
+   - Maintain clean separation between frontend and backend
+   - Follow domain-driven design principles
+   - Prioritize modularity and extensibility
+
+2. Coding Standards:
+   - Strictly adhere to Python (PEP 8) and TypeScript style guides
+   - Maintain 80%+ test coverage
+   - Write clear, self-documenting code with meaningful variable and function names
+   - Add type hints for all function signatures
+   - Use docstrings for all classes and functions
+
+3. Feature Development Guidelines:
+   - Break down complex features into smaller, manageable tasks
+   - Implement features incrementally with corresponding unit and integration tests
+   - Always consider scalability and performance implications
+   - Prioritize user experience in all implementations
+
+4. Testing Strategy:
+   - Write unit tests for all new functionality
+   - Create integration tests for critical user flows
+   - Use pytest for backend testing
+   - Use Jest for frontend testing
+   - Aim for meaningful test cases that cover edge cases
+
+5. Security Considerations:
+   - Never hardcode sensitive information
+   - Implement proper authentication and authorization checks
+   - Use environment variables for configuration
+   - Follow OWASP security guidelines
+   - Sanitize and validate all user inputs
+
+6. Performance Optimization:
+   - Use database indexing for query optimization
+   - Implement caching strategies where appropriate
+   - Minimize database round trips
+   - Use lazy loading and pagination for large datasets
+
+7. Documentation Requirements:
+   - Update README.md for any significant changes
+   - Maintain clear and up-to-date API documentation
+   - Document complex algorithms and business logic
+   - Keep FEATURES.md updated with project progress
+
+8. Dependency Management:
+   - Regularly update dependencies
+   - Use exact version pinning in requirements.txt
+   - Conduct security audits on third-party packages
+   - Minimize external dependencies
+
+9. Error Handling:
+   - Implement comprehensive error logging
+   - Create meaningful error messages
+   - Use structured error responses in API
+   - Implement global error handling middleware
+
+10. Continuous Improvement:
+    - Regularly refactor code to improve quality
+    - Conduct code reviews before merging
+    - Be open to feedback and alternative implementations
+    - Stay aligned with project's core learning management system goals

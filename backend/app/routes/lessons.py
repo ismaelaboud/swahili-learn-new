@@ -9,8 +9,10 @@ from app.models.lesson import LessonModule
 from app.schemas.lesson import (
     LessonModuleCreate, 
     LessonModuleResponse, 
-    LessonModuleUpdate
+    LessonModuleUpdate,
+    LessonVisibilityUpdate
 )
+from app.services.lesson_service import LessonVisibilityService
 
 router = APIRouter(
     prefix="/lessons",
@@ -116,3 +118,37 @@ def delete_lesson_module(
     db.commit()
     
     return None
+
+@router.patch("/{lesson_id}/visibility", response_model=LessonModuleResponse)
+def update_lesson_visibility(
+    lesson_id: int,
+    visibility_update: LessonVisibilityUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """
+    Update lesson visibility settings
+    - Only admins can modify lesson visibility
+    """
+    try:
+        updated_lesson = LessonVisibilityService.update_lesson_visibility(
+            db, lesson_id, visibility_update
+        )
+        return updated_lesson
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.get("/course/{course_id}/accessible", response_model=List[LessonModuleResponse])
+def get_accessible_lessons(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get lessons accessible to the current user
+    - Returns lessons based on user's role and current time
+    """
+    accessible_lessons = LessonVisibilityService.get_accessible_lessons(
+        db, course_id, current_user.role
+    )
+    return accessible_lessons

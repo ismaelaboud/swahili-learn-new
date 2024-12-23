@@ -5,6 +5,10 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: { unoptimized: true },
+  swcMinify: true,
+  experimental: {
+    swcPlugins: []
+  }
 };
 
 module.exports = nextConfig;

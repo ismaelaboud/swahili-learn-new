@@ -23,8 +23,9 @@ from app.main import app
 from app.services.database import Base, get_db
 from app.services.auth import get_current_active_user, get_password_hash
 from app.models.user import User
-from app.models.course import Course, Category, Enrollment, EnrollmentStatus, Lesson, CourseProgress
+from app.models.course import Course, Category, Enrollment, EnrollmentStatus, Lesson
 from app.models.lesson import LessonModule
+from app.models.user import UserRoleEnum  # Import UserRoleEnum
 
 # Create an in-memory SQLite engine for testing
 TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -104,7 +105,7 @@ def test_user(test_db_session):
     user = User(
         username=f"testuser_{uuid.uuid4()}",
         email=unique_email,
-        role="admin",
+        role=UserRoleEnum.ADMIN,  # Use the enum value
         hashed_password=get_password_hash("password")  
     )
     test_db_session.add(user)
@@ -138,16 +139,50 @@ def test_category(test_db_session):
 @pytest.fixture
 def test_course(test_db_session, test_category, test_user):
     course = Course(
-        title="Test Course", 
-        description="Test Description",
+        title="Python Programming", 
+        description="Learn Python from scratch",
         instructor_id=test_user.id,  # Ensure the course is created by the test user
-        difficulty_level="Beginner"
+        difficulty_level="beginner",
+        tags="python,programming,beginner",
+        category="Web Development",
+        price=49.99,
+        average_rating=4.5,
+        total_enrollments=100
     )
     course.categories.append(test_category)
     test_db_session.add(course)
     test_db_session.commit()
     test_db_session.refresh(course)
     return course
+
+# Fixture to create multiple test courses for pagination
+@pytest.fixture
+def test_courses(test_db_session, test_category, test_user):
+    courses = [
+        Course(
+            title=f"Python Course {i}", 
+            description=f"Python programming course {i}",
+            instructor_id=test_user.id,
+            difficulty_level="beginner" if i % 2 == 0 else "intermediate",
+            tags=f"python,programming,course{i}",
+            category="Web Development" if i % 2 == 0 else "Data Science",
+            price=float(i * 10),
+            average_rating=float(i % 5),
+            total_enrollments=i * 10
+        ) for i in range(1, 11)  # Create 10 courses
+    ]
+    
+    for course in courses:
+        course.categories.append(test_category)
+        test_db_session.add(course)
+    
+    test_db_session.commit()
+    
+    # Refresh each course to ensure it has an ID
+    for course in courses:
+        test_db_session.refresh(course)
+    
+    return courses
 
 # Test enrollment fixture
 @pytest.fixture

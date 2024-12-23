@@ -56,6 +56,57 @@ Swahili Learn is a comprehensive Learning Management System (LMS) designed to he
 - Community Interaction
 - Mentorship Connections
 
+### Content Visibility Controls
+#### Overview
+The Content Visibility Controls feature provides granular control over lesson accessibility in the learning management system. This feature allows administrators to:
+
+- Set lesson visibility status
+- Define start and end dates for lesson availability
+- Restrict lesson access based on user roles
+
+#### Key Features
+
+##### Visibility Management
+- `is_visible`: Boolean flag to enable/disable lesson visibility
+- `visibility_start_date`: Defines when a lesson becomes accessible
+- `visibility_end_date`: Defines when a lesson becomes inaccessible
+
+##### Role-Based Access Control
+- `required_roles`: Specifies which user roles can access a lesson
+- Supports multiple roles per lesson
+- Prevents unauthorized access based on user role
+
+#### Accessibility Rules
+Lessons are considered accessible when ALL of the following conditions are met:
+1. `is_visible` is set to `True`
+2. Current time is between `visibility_start_date` and `visibility_end_date`
+3. User's role is in the `required_roles` list
+
+#### Use Cases
+- Scheduled course content release
+- Exam preparation materials with time-limited access
+- Role-specific learning paths
+- Compliance training with strict access controls
+
+#### Implementation Details
+- Implemented in `LessonModule` model
+- Validation in `LessonVisibilityService`
+- Comprehensive test coverage in `test_lesson_visibility.py`
+
+#### Example Scenarios
+```python
+# Lesson only for students, available from Jan 1 to Feb 1
+lesson.is_visible = True
+lesson.visibility_start_date = datetime(2024, 1, 1)
+lesson.visibility_end_date = datetime(2024, 2, 1)
+lesson.required_roles = ['student']
+```
+
+#### Future Enhancements
+- Notification system for upcoming lesson availability
+- More granular role-based permissions
+- Integration with course progression tracking
+
 ## Prerequisites
 
 - Node.js (v16+)
@@ -142,7 +193,3 @@ yarn lint
 - [ ] AI-powered Learning Recommendations
 - [ ] Enhanced Community Features
 - [ ] Expanded Learning Paths
-
-
-
-

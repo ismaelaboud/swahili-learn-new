@@ -10,6 +10,12 @@ interface CategoryPageProps {
   };
 }
 
+export function generateStaticParams() {
+  return validCategories.map((category) => ({
+    category: category,
+  }));
+}
+
 export default function CategoryPage({ params }: CategoryPageProps) {
   if (!validCategories.includes(params.category)) {
     notFound();

@@ -63,6 +63,13 @@ class Course(Base):
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
     
+    # Additional Course Attributes
+    tags = Column(String, nullable=True)  # Comma-separated tags
+    category = Column(String, nullable=True)  # Main category of the course
+    price = Column(Float, default=0.0)
+    average_rating = Column(Float, default=0.0)
+    total_enrollments = Column(Integer, default=0)
+    
     # Relationships
     categories = relationship(
         "Category", 
@@ -73,6 +80,8 @@ class Course(Base):
     lessons = relationship("Lesson", back_populates="course", order_by="Lesson.order")
     lesson_modules = relationship("LessonModule", back_populates="course", cascade="all, delete-orphan")
     quizzes = relationship("Quiz", back_populates="course")
+    certificates = relationship("Certificate", back_populates="course")
+    instructor = relationship("User", back_populates="courses_taught")
     
     def soft_delete(self):
         """Mark course as deleted"""

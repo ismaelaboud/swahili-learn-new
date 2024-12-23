@@ -170,9 +170,6 @@ npm run lint
 yarn lint
 ```
 
-## Deployment
-
-[Add specific deployment instructions for your infrastructure]
 
 ## Contributing
 
@@ -182,10 +179,7 @@ yarn lint
 4. Push to the branch
 5. Open a Pull Request
 
-### Development Guidelines
-- Follow PEP 8 for Python
-- Use TypeScript strict mode
-- Write comprehensive tests
+
 
 ## Roadmap
 

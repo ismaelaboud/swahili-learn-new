@@ -1,0 +1,15 @@
+# Windsurf IDE local rules
+.windsurfrules
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Miscellaneous
+*.log
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

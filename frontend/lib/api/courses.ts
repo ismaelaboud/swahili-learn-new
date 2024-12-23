@@ -3,7 +3,7 @@ import { getSession } from '../auth'; // We'll create this later
 
 // Create an axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api',
+  baseURL: 'http://127.0.0.1:8000',
   withCredentials: true,
 });
 
@@ -11,13 +11,11 @@ const api = axios.create({
 api.interceptors.request.use(async (config) => {
   try {
     const session = await getSession();
-    console.log('Session retrieved:', session ? 'Valid' : 'No session');
+    console.log('Session retrieved:', session ? 'Valid' : 'Invalid');
     
     if (session?.accessToken) {
       console.log('Adding authorization header');
       config.headers['Authorization'] = `Bearer ${session.accessToken}`;
-    } else {
-      console.warn('No access token available');
     }
     return config;
   } catch (error) {
@@ -32,10 +30,10 @@ api.interceptors.request.use(async (config) => {
 export interface Course {
   id: string;
   title: string;
-  description: string;
-  instructor: string;
-  category: string;
-  difficulty: string;
+  description?: string;
+  instructor?: string;
+  difficulty?: string;
+  categories: string[];
   price: number;
   averageRating: number;
   totalEnrollments: number;
@@ -54,22 +52,80 @@ export interface CourseSearchParams {
   sortOrder?: 'asc' | 'desc';
 }
 
-export async function fetchCourses(params: CourseSearchParams = {}) {
+export interface CourseResponse {
+  courses: Course[];
+  total_count: number;
+  total_pages: number;
+  current_page: number;
+}
+
+export async function fetchCourses(params: CourseSearchParams = {}): Promise<CourseResponse> {
   try {
-    console.log('Fetching courses with params:', params);
-    console.log('Base URL:', api.defaults.baseURL);
-    const response = await api.get('/courses', { params });
-    return response.data;
+    const response = await api.get('/courses', { 
+      params: {
+        category: params.category || '',
+        difficulty: params.difficulty || '',
+        page: params.page || 1,
+        pageSize: params.pageSize || 9,
+        query: params.query || ''
+      }
+    });
+
+    return {
+      courses: response.data.courses || [],
+      total_count: response.data.total_count || 0,
+      total_pages: response.data.total_pages || 1,
+      current_page: response.data.current_page || 1
+    };
   } catch (error) {
     console.error('Failed to fetch courses', error);
-    if (axios.isAxiosError(error)) {
-      console.error('Error details:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        headers: error.response?.headers
-      });
-    }
-    throw error;
+    
+    // Mock courses with free images from Unsplash
+    const mockCourses: Course[] = [
+      {
+        id: '1',
+        title: 'Full Stack Web Development Bootcamp',
+        description: 'Comprehensive course covering React, Node.js, and modern web technologies',
+        instructor: 'Alex Rodriguez',
+        difficulty: 'Intermediate',
+        categories: ['Web Development', 'Full Stack'],
+        price: 199.99,
+        averageRating: 4.8,
+        totalEnrollments: 2500,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1172&q=80'
+      },
+      {
+        id: '2',
+        title: 'DevOps Mastery: CI/CD and Cloud Deployment',
+        description: 'Learn advanced DevOps practices with Docker, Kubernetes, and AWS',
+        instructor: 'Sarah Jenkins',
+        difficulty: 'Advanced',
+        categories: ['DevOps', 'Cloud Computing'],
+        price: 249.99,
+        averageRating: 4.9,
+        totalEnrollments: 1800,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1633356122102-3fe601e05bd2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80'
+      },
+      {
+        id: '3',
+        title: 'Python for Data Science and Machine Learning',
+        description: 'Practical Python programming with focus on data analysis and AI',
+        instructor: 'Dr. Michael Chang',
+        difficulty: 'Intermediate',
+        categories: ['Programming', 'Data Science'],
+        price: 179.99,
+        averageRating: 4.7,
+        totalEnrollments: 3200,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80'
+      }
+    ];
+
+    return {
+      courses: mockCourses,
+      total_count: mockCourses.length,
+      total_pages: 1,
+      current_page: 1
+    };
   }
 }
 

@@ -51,46 +51,30 @@ class Course(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
-    description = Column(Text)
+    description = Column(Text, nullable=True)
     instructor_id = Column(Integer, ForeignKey('users.id'))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Difficulty Level
-    difficulty_level = Column(String, default='Beginner')
-    
-    # Soft Delete Field
+    difficulty_level = Column(String, nullable=True)
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
-    
-    # Additional Course Attributes
-    tags = Column(String, nullable=True)  # Comma-separated tags
-    category = Column(String, nullable=True)  # Main category of the course
+    category = Column(String, nullable=True)
     price = Column(Float, default=0.0)
     average_rating = Column(Float, default=0.0)
     total_enrollments = Column(Integer, default=0)
-    
+
     # Relationships
+    instructor = relationship("User", back_populates="courses")
     categories = relationship(
         "Category", 
         secondary=course_category_association, 
         back_populates="courses"
     )
+    lessons = relationship("Lesson", back_populates="course")
     enrollments = relationship("Enrollment", back_populates="course")
-    lessons = relationship("Lesson", back_populates="course", order_by="Lesson.order")
-    lesson_modules = relationship("LessonModule", back_populates="course", cascade="all, delete-orphan")
-    quizzes = relationship("Quiz", back_populates="course")
-    certificates = relationship("Certificate", back_populates="course")
-    instructor = relationship("User", back_populates="courses_taught")
-    
-    def soft_delete(self):
-        """Mark course as deleted"""
-        self.is_deleted = True
-        self.deleted_at = datetime.utcnow()
-    
+
     @classmethod
     def get_active_courses(cls, query):
-        """Filter out deleted courses"""
         return query.filter(cls.is_deleted == False)
 
 class Lesson(Base):

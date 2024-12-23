@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,18 @@ import {
   CourseSearchParams 
 } from "@/lib/api/courses";
 import { isAuthenticated } from "@/lib/auth";
+
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  instructor: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  category: string;
+  price: number;
+  thumbnailUrl: string;
+  averageRating: number;
+}
 
 export function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -47,11 +60,19 @@ export function Courses() {
           query: searchQuery
         });
         
+        if (!response || !response.courses) {
+          throw new Error('Invalid response from server');
+        }
+
         setCourses(response.courses);
-        setTotalPages(response.totalPages);
+        setTotalPages(response.total_pages || 1);
       } catch (error) {
         console.error("Failed to load courses", error);
-        setError(error instanceof Error ? error.message : 'An unknown error occurred');
+        setError(
+          error instanceof Error 
+            ? error.message 
+            : 'An unknown error occurred while fetching courses'
+        );
       } finally {
         setLoading(false);
       }
@@ -74,15 +95,53 @@ export function Courses() {
     return (
       <div className="text-center text-red-500 p-8">
         <h3 className="text-2xl font-bold mb-4">Failed to Load Courses</h3>
-        <p>{error}</p>
+        <p className="mb-4">{error}</p>
+        <div className="flex justify-center space-x-4">
+          <Button 
+            onClick={() => {
+              setError(null);
+              setFilters(prev => ({ ...prev }));
+            }} 
+            variant="outline"
+          >
+            Try Again
+          </Button>
+          <Button 
+            onClick={() => {
+              setFilters({
+                category: "",
+                difficulty: "",
+                page: 1,
+                pageSize: 9
+              });
+              setSearchQuery("");
+            }}
+          >
+            Reset Filters
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Render empty state
+  if (courses.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <h3 className="text-2xl font-bold mb-4">No Courses Found</h3>
+        <p className="mb-4">There are no courses matching your current filters.</p>
         <Button 
           onClick={() => {
-            setError(null);
-            setFilters(prev => ({ ...prev }));
-          }} 
-          className="mt-4"
+            setFilters({
+              category: "",
+              difficulty: "",
+              page: 1,
+              pageSize: 9
+            });
+            setSearchQuery("");
+          }}
         >
-          Try Again
+          Clear Filters
         </Button>
       </div>
     );
@@ -105,6 +164,11 @@ export function Courses() {
   const handlePageChange = (newPage: number) => {
     setFilters(prev => ({ ...prev, page: newPage }));
   };
+
+  const filteredCourses = courses.filter(course => 
+    course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    (filters.category === "" || course.category === filters.category)
+  );
 
   return (
     <section id="courses" className="py-24">
@@ -133,49 +197,50 @@ export function Courses() {
             className="flex-grow"
           />
           <Select 
-            value={filters.category || ""}
+            value={filters.category || "all"}
             onValueChange={(value) => setFilters(prev => ({
-              ...prev, 
-              category: value === "" ? undefined : value
+              ...prev,
+              category: value === "all" ? "" : value
             }))}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder="Select Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
-              <SelectItem value="web-development">Web Development</SelectItem>
-              <SelectItem value="data-science">Data Science</SelectItem>
-              <SelectItem value="cloud-computing">Cloud Computing</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="Web Development">Web Development</SelectItem>
+              <SelectItem value="DevOps">DevOps</SelectItem>
+              <SelectItem value="Programming">Programming</SelectItem>
+              <SelectItem value="Data Science">Data Science</SelectItem>
             </SelectContent>
           </Select>
           <Select 
-            value={filters.difficulty || ""}
+            value={filters.difficulty || "all"}
             onValueChange={(value) => setFilters(prev => ({
-              ...prev, 
-              difficulty: value === "" ? undefined : value
+              ...prev,
+              difficulty: value === "all" ? "" : value
             }))}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Difficulty" />
+              <SelectValue placeholder="Select Difficulty" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Levels</SelectItem>
-              <SelectItem value="beginner">Beginner</SelectItem>
-              <SelectItem value="intermediate">Intermediate</SelectItem>
-              <SelectItem value="advanced">Advanced</SelectItem>
+              <SelectItem value="all">All Levels</SelectItem>
+              <SelectItem value="Beginner">Beginner</SelectItem>
+              <SelectItem value="Intermediate">Intermediate</SelectItem>
+              <SelectItem value="Advanced">Advanced</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {courses.length === 0 ? (
+        {filteredCourses.length === 0 ? (
           <div className="text-center py-12">
             No courses found. Try adjusting your search or filters.
           </div>
         ) : (
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {courses.map((course, index) => (
+              {filteredCourses.map((course, index) => (
                 <motion.div
                   key={course.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -183,52 +248,48 @@ export function Courses() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <Card className="h-full flex flex-col overflow-hidden">
-                    <div className="relative h-48">
-                      <Image
-                        src={course.thumbnailUrl || "/default-course-image.jpg"}
-                        alt={course.title}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <CardHeader className="flex-grow">
-                      <CardTitle>{course.title}</CardTitle>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{course.difficulty}</span>
-                        <span>•</span>
-                        <span>{course.category}</span>
+                  <Link href={`/courses/${course.id}`}>
+                    <Card className="hover:shadow-lg transition-all duration-300">
+                      <div className="relative h-48 w-full">
+                        <Image 
+                          src={course.thumbnailUrl || "/default-course-image.jpg"} 
+                          alt={course.title} 
+                          fill 
+                          className="object-cover rounded-t-lg"
+                        />
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="mb-4 text-sm line-clamp-3">{course.description}</p>
-                      <div className="flex justify-between items-center">
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="secondary">
-                            {course.price > 0 ? `$${course.price}` : 'Free'}
-                          </Badge>
-                          <Badge variant="outline">
-                            Rating: {course.averageRating.toFixed(1)}/5
-                          </Badge>
+                      <CardHeader>
+                        <CardTitle>{course.title}</CardTitle>
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline">{course.difficulty}</Badge>
+                          <span className="text-sm font-semibold">
+                            ${course.price.toFixed(2)}
+                          </span>
                         </div>
-                        <div className="flex space-x-2">
-                          <Link 
-                            href={`/courses/${course.id}`} 
-                            className="hover:underline text-sm"
-                          >
-                            View Details
-                          </Link>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {course.description}
+                        </p>
+                        <div className="flex justify-between items-center mt-4">
+                          <div className="flex items-center space-x-2">
+                            <Star className="h-4 w-4 text-yellow-500" />
+                            <span className="text-sm">{course.averageRating.toFixed(1)}</span>
+                          </div>
                           <Button 
-                            onClick={() => handleEnroll(course.id)}
-                            size="sm"
+                            size="sm" 
                             variant="outline"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleEnroll(course.id);
+                            }}
                           >
                             Enroll
                           </Button>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 </motion.div>
               ))}
             </div>

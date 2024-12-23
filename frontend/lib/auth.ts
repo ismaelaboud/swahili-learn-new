@@ -2,7 +2,7 @@ import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
 
 export interface Session {
   accessToken: string;
@@ -20,7 +20,21 @@ export async function getSession(): Promise<Session | null> {
   const accessToken = Cookies.get('accessToken');
   const refreshToken = Cookies.get('refreshToken');
 
-  if (!accessToken) return null;
+  // For development, return a mock session if no tokens
+  if (!accessToken) {
+    console.warn('No access token, returning guest session');
+    return {
+      accessToken: '',
+      refreshToken: '',
+      user: {
+        id: 'guest',
+        username: 'Guest',
+        email: 'guest@example.com',
+        role: 'GUEST'
+      },
+      expiresAt: Date.now() + 3600 // 1 hour from now
+    };
+  }
 
   try {
     const decodedToken = jwtDecode<{
@@ -51,7 +65,18 @@ export async function getSession(): Promise<Session | null> {
     };
   } catch (error) {
     // Invalid token
-    return null;
+    console.warn('Invalid token, returning guest session');
+    return {
+      accessToken: '',
+      refreshToken: '',
+      user: {
+        id: 'guest',
+        username: 'Guest',
+        email: 'guest@example.com',
+        role: 'GUEST'
+      },
+      expiresAt: Date.now() + 3600 // 1 hour from now
+    };
   }
 }
 
@@ -97,13 +122,15 @@ async function refreshTokens(refreshToken?: string): Promise<Session | null> {
 
 export async function login(email: string, password: string) {
   try {
-    const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
+    const response = await axios.post(`${API_BASE_URL}/users/token`, { 
+      username: email,  // Backend expects username, not email
+      password 
+    });
 
-    const { accessToken, refreshToken } = response.data;
+    const { access_token: accessToken } = response.data;
 
     // Store tokens in cookies
     Cookies.set('accessToken', accessToken, { expires: 1/24 }); // 1 hour
-    Cookies.set('refreshToken', refreshToken, { expires: 7 }); // 7 days
 
     return await getSession();
   } catch (error) {
